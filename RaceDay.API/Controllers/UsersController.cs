@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using RaceDay.API.DTOs;
 
 namespace RaceDay.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         private readonly RaceDayDbContext _context;
@@ -35,11 +38,25 @@ namespace RaceDay.API.Controllers
         }
 
         // GET: api/Users/1
+        [Authorize(Roles = "Organiser")]
         [HttpGet("{id:int}")]
         public async Task<IActionResult> GetUser(int id)
         {
+            var currentUserId = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(currentUserId, out int authenticatedUserId))
+            {
+                return Unauthorized();
+            }
+
+            if (id != authenticatedUserId)
+            {
+                return Forbid();
+            }
+
             var user = await _context.Users
-                .Where(u => u.UserID == id)
+                .Where(u => u.UserID == authenticatedUserId)
                 .Select(u => new
                 {
                     u.UserID,
@@ -59,72 +76,58 @@ namespace RaceDay.API.Controllers
         }
 
         // POST: api/Users
-        [HttpPost]
-        public async Task<ActionResult> CreateUser(User user)
-        {
-            bool emailExists = await _context.Users
-                .AnyAsync(u => u.Email == user.Email);
-
-            if (emailExists)
-            {
-                return Conflict("A user with this email already exists.");
-            }
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction(
-                nameof(GetUser),
-                new { id = user.UserID },
-                new
-                {
-                    user.UserID,
-                    user.FullName,
-                    user.Email,
-                    user.Role,
-                    user.DateCreated
-                });
-        }
+  
 
         // PUT: api/Users/1
         [HttpPut("{id:int}")]
-        public async Task<IActionResult> UpdateUser(int id, User updatedUser)
+        public async Task<IActionResult> UpdateUser(int id, UpdateProfileRequest request)
         {
-            if (id != updatedUser.UserID)
+            var currentUserId = User.FindFirst(
+                System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(currentUserId, out int authenticatedUserId))
             {
-                return BadRequest(
-                    "The URL ID does not match the user ID.");
+                return Unauthorized();
             }
 
-            var existingUser = await _context.Users.FindAsync(id);
+            if (id != authenticatedUserId)
+            {
+                return Forbid();
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var existingUser = await _context.Users.FindAsync(authenticatedUserId);
 
             if (existingUser == null)
             {
                 return NotFound();
             }
 
+            var email = request.Email.Trim();
+
             bool emailExists = await _context.Users.AnyAsync(
-                u => u.Email == updatedUser.Email && u.UserID != id);
+                u => u.Email == email && u.UserID != authenticatedUserId);
 
             if (emailExists)
             {
-                return Conflict(
-                    "Another user already uses this email.");
+                return Conflict("Another user already uses this email.");
             }
 
-            existingUser.FullName = updatedUser.FullName;
-            existingUser.Email = updatedUser.Email;
-            existingUser.Role = updatedUser.Role;
+            existingUser.FullName = request.FullName.Trim();
+            existingUser.Email = email;
 
-            // Password changes will be handled securely
-            // when authentication is implemented.
-
+            // The user's role and password cannot be changed here.
             await _context.SaveChangesAsync();
 
             return NoContent();
         }
 
         // DELETE: api/Users/1
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteUser(int id)
         {
