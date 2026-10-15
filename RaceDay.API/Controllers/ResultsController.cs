@@ -7,6 +7,10 @@ using System.Security.Claims;
 
 namespace RaceDay.API.Controllers
 {
+    /// <summary>
+    /// Manages race results, allowing participants to view their own results
+    /// and organisers to manage results for their own events.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     [Authorize]
@@ -19,10 +23,22 @@ namespace RaceDay.API.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Retrieves results associated with the authenticated user's entries
+        /// or events, depending on their role.
+        /// Participants see their own results, while organisers see results
+        /// for their own events.
+        /// </summary>
+        /// <returns>A list of results the authenticated user is permitted to view.</returns>
+        /// <response code="200">The results were retrieved successfully.</response>
+        /// <response code="401">The user is not authenticated.</response>
+        /// <response code="403">The user's role is not permitted to view results.</response>
         // GET: api/Results
-        // Participants see their own results.
-        // Organisers see results for their own events.
         [HttpGet]
+        [ProducesResponseType(
+            typeof(IEnumerable<Result>), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
         public async Task<ActionResult<IEnumerable<Result>>> GetResults()
         {
             var userIdValue = User.FindFirst(
@@ -62,10 +78,22 @@ namespace RaceDay.API.Controllers
             return Forbid();
         }
 
+        /// <summary>
+        /// Retrieves a specific race result if the authenticated user
+        /// is permitted to access it.
+        /// </summary>
+        /// <param name="id">The ID of the result to retrieve.</param>
+        /// <returns>The requested result.</returns>
+        /// <response code="200">The result was retrieved successfully.</response>
+        /// <response code="401">The user is not authenticated.</response>
+        /// <response code="403">The user's role is not permitted to view results.</response>
+        /// <response code="404">The result does not exist or the user cannot access it.</response>
         // GET: api/Results/1
-        // A participant can view only their own result.
-        // An organiser can view results for their own events.
         [HttpGet("{id:int}")]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<ActionResult<Result>> GetResult(int id)
         {
             var userIdValue = User.FindFirst(
@@ -107,10 +135,26 @@ namespace RaceDay.API.Controllers
             return result;
         }
 
+        /// <summary>
+        /// Creates a result for an entry associated with an event
+        /// owned by the authenticated organiser.
+        /// Only one result may exist for each entry.
+        /// </summary>
+        /// <param name="result">The entry ID, finish time, position, pace, and result date.</param>
+        /// <returns>The newly created result.</returns>
+        /// <response code="201">The result was created successfully.</response>
+        /// <response code="400">The entry does not exist or does not belong to the organiser's events.</response>
+        /// <response code="401">The user is not authenticated.</response>
+        /// <response code="403">The user is not an organiser.</response>
+        /// <response code="409">A result already exists for the entry.</response>
         // POST: api/Results
-        // Only organisers can create results for their own events.
         [Authorize(Roles = "Organiser")]
         [HttpPost]
+        [ProducesResponseType(typeof(Result), StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<ActionResult<Result>> CreateResult(Result result)
         {
             var userIdValue = User.FindFirst(
@@ -146,10 +190,28 @@ namespace RaceDay.API.Controllers
                 result);
         }
 
+        /// <summary>
+        /// Updates an existing result for an entry associated with an event
+        /// owned by the authenticated organiser.
+        /// </summary>
+        /// <param name="id">The ID of the result to update.</param>
+        /// <param name="updatedResult">The updated result details.</param>
+        /// <returns>No content when the update succeeds.</returns>
+        /// <response code="204">The result was updated successfully.</response>
+        /// <response code="400">The IDs do not match or the specified entry is invalid.</response>
+        /// <response code="401">The user is not authenticated.</response>
+        /// <response code="403">The user is not an organiser.</response>
+        /// <response code="404">The result does not exist or its current entry is not associated with the organiser's events.</response>
+        /// <response code="409">Another result already exists for the specified entry.</response>
         // PUT: api/Results/1
-        // Only organisers can update results for their own events.
         [Authorize(Roles = "Organiser")]
         [HttpPut("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> UpdateResult(
             int id, Result updatedResult)
         {
@@ -208,10 +270,23 @@ namespace RaceDay.API.Controllers
             return NoContent();
         }
 
+        /// <summary>
+        /// Deletes a result associated with an event owned by the
+        /// authenticated organiser.
+        /// </summary>
+        /// <param name="id">The ID of the result to delete.</param>
+        /// <returns>No content when the result is deleted successfully.</returns>
+        /// <response code="204">The result was deleted successfully.</response>
+        /// <response code="401">The user is not authenticated.</response>
+        /// <response code="403">The user is not an organiser.</response>
+        /// <response code="404">The result does not exist or is not associated with the organiser's events.</response>
         // DELETE: api/Results/1
-        // Only organisers can delete results for their own events.
         [Authorize(Roles = "Organiser")]
         [HttpDelete("{id:int}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status403Forbidden)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
         public async Task<IActionResult> DeleteResult(int id)
         {
             var userIdValue = User.FindFirst(
@@ -241,4 +316,5 @@ namespace RaceDay.API.Controllers
             return NoContent();
         }
     }
+
 }

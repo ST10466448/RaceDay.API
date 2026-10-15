@@ -16,6 +16,16 @@ namespace RaceDay.API.Models
         [MaxLength(150)]
         public string EventName { get; set; } = string.Empty;
 
+        [Required]
+        [MaxLength(1000)]
+        public string Description { get; set; } = string.Empty;
+
+        [Required]
+        [RegularExpression(
+            "^(Run|Walk|Cycle)$",
+            ErrorMessage = "Event type must be Run, Walk, or Cycle.")]
+        public string EventType { get; set; } = string.Empty;
+
         public DateTime EventDate { get; set; }
 
         public TimeSpan StartTime { get; set; }
@@ -34,4 +44,5 @@ namespace RaceDay.API.Models
         public ICollection<EventCategory> Categories { get; set; }
             = new List<EventCategory>();
     }
+
 }

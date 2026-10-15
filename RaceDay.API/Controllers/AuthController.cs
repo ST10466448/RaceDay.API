@@ -11,6 +11,9 @@ using RaceDay.API.Models;
 
 namespace RaceDay.API.Controllers
 {
+    /// <summary>
+    /// Provides user registration and authentication endpoints.
+    /// </summary>
     [Route("api/[controller]")]
     [ApiController]
     public class AuthController : ControllerBase
@@ -27,8 +30,22 @@ namespace RaceDay.API.Controllers
             _configuration = configuration;
         }
 
+        /// <summary>
+        /// Registers a new participant account.
+        /// Passwords are securely hashed before being stored.
+        /// </summary>
+        /// <param name="request">
+        /// The new participant's name, email and password.
+        /// </param>
+        /// <returns>The newly created participant's profile.</returns>
+        /// <response code="201">The participant was registered successfully.</response>
+        /// <response code="400">The registration data is invalid.</response>
+        /// <response code="409">An account with this email already exists.</response>
         // POST: api/Auth/register
         [HttpPost("register")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status409Conflict)]
         public async Task<IActionResult> Register(
             RegisterRequest request)
         {
@@ -65,8 +82,21 @@ namespace RaceDay.API.Controllers
             });
         }
 
+        /// <summary>
+        /// Authenticates a user and generates a JWT access token.
+        /// </summary>
+        /// <param name="request">The user's email and password.</param>
+        /// <returns>A JWT token, its expiry time and the user's profile.</returns>
+        /// <response code="200">Authentication succeeded.</response>
+        /// <response code="400">The login data is invalid.</response>
+        /// <response code="401">The email or password is incorrect.</response>
+        /// <response code="500">The JWT signing key is not configured.</response>
         // POST: api/Auth/login
         [HttpPost("login")]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
         public async Task<IActionResult> Login(
             LoginRequest request)
         {
