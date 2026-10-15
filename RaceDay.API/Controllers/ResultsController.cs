@@ -1,12 +1,15 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using System.Security.Claims;
 
 namespace RaceDay.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class ResultsController : ControllerBase
     {
         private readonly RaceDayDbContext _context;
@@ -17,21 +20,86 @@ namespace RaceDay.API.Controllers
         }
 
         // GET: api/Results
+        // Participants see their own results.
+        // Organisers see results for their own events.
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Result>>> GetResults()
         {
-            return await _context.Results
-                .AsNoTracking()
-                .ToListAsync();
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int userId))
+                return Unauthorized();
+
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            if (role == "Participant")
+            {
+                var participantResults = await _context.Results
+                    .AsNoTracking()
+                    .Where(r => _context.Entries.Any(e =>
+                        e.EntryID == r.EntryID &&
+                        e.ParticipantID == userId))
+                    .ToListAsync();
+
+                return participantResults;
+            }
+
+            if (role == "Organiser")
+            {
+                var organiserResults = await _context.Results
+                    .AsNoTracking()
+                    .Where(r => _context.Entries.Any(e =>
+                        e.EntryID == r.EntryID &&
+                        e.Category != null &&
+                        e.Category.Event != null &&
+                        e.Category.Event.OrganizerID == userId))
+                    .ToListAsync();
+
+                return organiserResults;
+            }
+
+            return Forbid();
         }
 
         // GET: api/Results/1
+        // A participant can view only their own result.
+        // An organiser can view results for their own events.
         [HttpGet("{id:int}")]
         public async Task<ActionResult<Result>> GetResult(int id)
         {
-            var result = await _context.Results
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int userId))
+                return Unauthorized();
+
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
+
+            var query = _context.Results
                 .AsNoTracking()
-                .FirstOrDefaultAsync(r => r.ResultID == id);
+                .Where(r => r.ResultID == id);
+
+            if (role == "Participant")
+            {
+                query = query.Where(r => _context.Entries.Any(e =>
+                    e.EntryID == r.EntryID &&
+                    e.ParticipantID == userId));
+            }
+            else if (role == "Organiser")
+            {
+                query = query.Where(r => _context.Entries.Any(e =>
+                    e.EntryID == r.EntryID &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == userId));
+            }
+            else
+            {
+                return Forbid();
+            }
+
+            var result = await query.FirstOrDefaultAsync();
 
             if (result == null)
                 return NotFound();
@@ -40,14 +108,27 @@ namespace RaceDay.API.Controllers
         }
 
         // POST: api/Results
+        // Only organisers can create results for their own events.
+        [Authorize(Roles = "Organiser")]
         [HttpPost]
         public async Task<ActionResult<Result>> CreateResult(Result result)
         {
-            bool entryExists = await _context.Entries
-                .AnyAsync(e => e.EntryID == result.EntryID);
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
 
-            if (!entryExists)
-                return BadRequest("The specified entry does not exist.");
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
+            bool entryBelongsToOrganiser = await _context.Entries
+                .AnyAsync(e =>
+                    e.EntryID == result.EntryID &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
+
+            if (!entryBelongsToOrganiser)
+                return BadRequest(
+                    "The entry does not exist or does not belong to your events.");
 
             bool resultExists = await _context.Results
                 .AnyAsync(r => r.EntryID == result.EntryID);
@@ -66,6 +147,8 @@ namespace RaceDay.API.Controllers
         }
 
         // PUT: api/Results/1
+        // Only organisers can update results for their own events.
+        [Authorize(Roles = "Organiser")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateResult(
             int id, Result updatedResult)
@@ -73,20 +156,42 @@ namespace RaceDay.API.Controllers
             if (id != updatedResult.ResultID)
                 return BadRequest("Result IDs do not match.");
 
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
             var result = await _context.Results.FindAsync(id);
 
             if (result == null)
                 return NotFound();
 
-            bool entryExists = await _context.Entries
-                .AnyAsync(e => e.EntryID == updatedResult.EntryID);
+            bool currentEntryBelongsToOrganiser =
+                await _context.Entries.AnyAsync(e =>
+                    e.EntryID == result.EntryID &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
 
-            if (!entryExists)
-                return BadRequest("The specified entry does not exist.");
+            if (!currentEntryBelongsToOrganiser)
+                return NotFound();
+
+            bool newEntryBelongsToOrganiser =
+                await _context.Entries.AnyAsync(e =>
+                    e.EntryID == updatedResult.EntryID &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
+
+            if (!newEntryBelongsToOrganiser)
+                return BadRequest(
+                    "The specified entry does not belong to your events.");
 
             bool anotherResultExists = await _context.Results
-                .AnyAsync(r => r.EntryID == updatedResult.EntryID
-                    && r.ResultID != id);
+                .AnyAsync(r =>
+                    r.EntryID == updatedResult.EntryID &&
+                    r.ResultID != id);
 
             if (anotherResultExists)
                 return Conflict(
@@ -104,12 +209,30 @@ namespace RaceDay.API.Controllers
         }
 
         // DELETE: api/Results/1
+        // Only organisers can delete results for their own events.
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteResult(int id)
         {
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
             var result = await _context.Results.FindAsync(id);
 
             if (result == null)
+                return NotFound();
+
+            bool entryBelongsToOrganiser = await _context.Entries
+                .AnyAsync(e =>
+                    e.EntryID == result.EntryID &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
+
+            if (!entryBelongsToOrganiser)
                 return NotFound();
 
             _context.Results.Remove(result);

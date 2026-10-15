@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using RaceDay.API.Data;
 using RaceDay.API.Models;
+using System.Security.Claims;
 
 namespace RaceDay.API.Controllers
 {
@@ -19,39 +20,42 @@ namespace RaceDay.API.Controllers
         }
 
         // GET: api/Entries
+        [Authorize(Roles = "Organiser")]
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Entry>>> GetEntries()
         {
-            return await _context.Entries
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
+            var entries = await _context.Entries
                 .AsNoTracking()
+                .Where(e => e.Category != null
+                    && e.Category.Event != null
+                    && e.Category.Event.OrganizerID == organiserId)
                 .ToListAsync();
-        }
 
-        // GET: api/Entries/1
-        [HttpGet("{id:int}")]
-        public async Task<ActionResult<Entry>> GetEntry(int id)
-        {
-            var entry = await _context.Entries
-                .AsNoTracking()
-                .FirstOrDefaultAsync(e => e.EntryID == id);
-
-            if (entry == null)
-                return NotFound();
-
-            return entry;
+            return entries;
         }
 
         // POST: api/Entries
         [HttpPost]
         public async Task<ActionResult<Entry>> CreateEntry(Entry entry)
         {
-            bool participantExists = await _context.Users
-                .AnyAsync(u => u.UserID == entry.ParticipantID
-                    && u.Role == "Participant");
+            var role = User.FindFirst(ClaimTypes.Role)?.Value;
 
-            if (!participantExists)
-                return BadRequest(
-                    "The specified participant does not exist or is not a participant.");
+            if (role != "Participant")
+                return Forbid();
+
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int participantId))
+                return Unauthorized();
+
+            entry.ParticipantID = participantId;
 
             bool categoryExists = await _context.EventCategories
                 .AnyAsync(c => c.CategoryID == entry.CategoryID);
@@ -59,9 +63,6 @@ namespace RaceDay.API.Controllers
             if (!categoryExists)
                 return BadRequest(
                     "The specified event category does not exist.");
-
-            if (!IsValidStatus(entry.EntryStatus))
-                return BadRequest("Invalid entry status.");
 
             if (entry.RaceNumber.HasValue)
             {
@@ -72,16 +73,17 @@ namespace RaceDay.API.Controllers
                     return Conflict("That race number is already in use.");
             }
 
+            entry.EntryDate = DateTime.UtcNow;
+            entry.EntryStatus = "Confirmed";
+
             _context.Entries.Add(entry);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(
-                nameof(GetEntry),
-                new { id = entry.EntryID },
-                entry);
+            return StatusCode(201, entry);
         }
 
         // PUT: api/Entries/1
+        [Authorize(Roles = "Organiser")]
         [HttpPut("{id:int}")]
         public async Task<IActionResult> UpdateEntry(
             int id, Entry updatedEntry)
@@ -89,23 +91,44 @@ namespace RaceDay.API.Controllers
             if (id != updatedEntry.EntryID)
                 return BadRequest("Entry IDs do not match.");
 
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
             var entry = await _context.Entries.FindAsync(id);
 
             if (entry == null)
                 return NotFound();
 
+            bool currentEntryBelongsToOrganiser =
+                await _context.Entries.AnyAsync(e =>
+                    e.EntryID == id &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
+
+            if (!currentEntryBelongsToOrganiser)
+                return NotFound();
+
             bool participantExists = await _context.Users
-                .AnyAsync(u => u.UserID == updatedEntry.ParticipantID
-                    && u.Role == "Participant");
+                .AnyAsync(u =>
+                    u.UserID == updatedEntry.ParticipantID &&
+                    u.Role == "Participant");
 
             if (!participantExists)
                 return BadRequest("The specified participant is invalid.");
 
-            bool categoryExists = await _context.EventCategories
-                .AnyAsync(c => c.CategoryID == updatedEntry.CategoryID);
+            bool categoryBelongsToOrganiser =
+                await _context.EventCategories.AnyAsync(c =>
+                    c.CategoryID == updatedEntry.CategoryID &&
+                    c.Event != null &&
+                    c.Event.OrganizerID == organiserId);
 
-            if (!categoryExists)
-                return BadRequest("The specified category does not exist.");
+            if (!categoryBelongsToOrganiser)
+                return BadRequest(
+                    "The specified category does not belong to your events.");
 
             if (!IsValidStatus(updatedEntry.EntryStatus))
                 return BadRequest("Invalid entry status.");
@@ -113,8 +136,9 @@ namespace RaceDay.API.Controllers
             if (updatedEntry.RaceNumber.HasValue)
             {
                 bool raceNumberExists = await _context.Entries
-                    .AnyAsync(e => e.RaceNumber == updatedEntry.RaceNumber
-                        && e.EntryID != id);
+                    .AnyAsync(e =>
+                        e.RaceNumber == updatedEntry.RaceNumber &&
+                        e.EntryID != id);
 
                 if (raceNumberExists)
                     return Conflict("That race number is already in use.");
@@ -132,12 +156,30 @@ namespace RaceDay.API.Controllers
         }
 
         // DELETE: api/Entries/1
+        [Authorize(Roles = "Organiser")]
         [HttpDelete("{id:int}")]
         public async Task<IActionResult> DeleteEntry(int id)
         {
-            var entry = await _context.Entries.FindAsync(id);
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
+
+            if (!int.TryParse(userIdValue, out int organiserId))
+                return Unauthorized();
+
+            var entry = await _context.Entries
+                .FirstOrDefaultAsync(e => e.EntryID == id);
 
             if (entry == null)
+                return NotFound();
+
+            bool entryBelongsToOrganiser =
+                await _context.Entries.AnyAsync(e =>
+                    e.EntryID == id &&
+                    e.Category != null &&
+                    e.Category.Event != null &&
+                    e.Category.Event.OrganizerID == organiserId);
+
+            if (!entryBelongsToOrganiser)
                 return NotFound();
 
             _context.Entries.Remove(entry);
