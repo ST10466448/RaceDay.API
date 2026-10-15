@@ -111,9 +111,18 @@ namespace RaceDay.API.Controllers
             if (user == null)
                 return Unauthorized("Invalid email or password.");
 
-            var verificationResult =
-                _passwordHasher.VerifyHashedPassword(
+            PasswordVerificationResult verificationResult;
+
+            try
+            {
+                verificationResult = _passwordHasher.VerifyHashedPassword(
                     user, user.PasswordHash, request.Password);
+            }
+            catch (FormatException)
+            {
+                // The stored password hash is invalid or from an old test account.
+                return Unauthorized("Invalid email or password.");
+            }
 
             if (verificationResult == PasswordVerificationResult.Failed)
                 return Unauthorized("Invalid email or password.");

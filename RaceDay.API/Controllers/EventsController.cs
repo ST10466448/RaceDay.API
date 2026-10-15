@@ -150,6 +150,8 @@ namespace RaceDay.API.Controllers
 
             existingEvent.RouteID = updatedEvent.RouteID;
             existingEvent.EventName = updatedEvent.EventName;
+            existingEvent.Description = updatedEvent.Description;
+            existingEvent.EventType = updatedEvent.EventType;
             existingEvent.EventDate = updatedEvent.EventDate;
             existingEvent.StartTime = updatedEvent.StartTime;
             existingEvent.Venue = updatedEvent.Venue;
