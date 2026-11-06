@@ -1,0 +1,61 @@
+﻿@{
+    ViewData["Title"] = "Participant Dashboard";
+}
+
+<div class="container mt-4">
+
+    <div class="p-5 mb-4 bg-dark text-white rounded-3">
+        <h1>Welcome to RaceDay, @ViewBag.FullName!</h1>
+        <p class="lead">
+            Your next race adventure starts here.
+        </p>
+    </div>
+
+    <h2 class="mb-4">Participant Dashboard</h2>
+
+    <div class="row g-4">
+
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title">Upcoming Events</h5>
+                    <p class="card-text">
+                        Discover upcoming running, walking and cycling events.
+                    </p>
+                    <a href="#" class="btn btn-dark">
+                        Browse Events
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title">My Enrolments</h5>
+                    <p class="card-text">
+                        View the events and categories you have entered.
+                    </p>
+                    <a href="#" class="btn btn-dark">
+                        My Enrolments
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card shadow h-100">
+                <div class="card-body">
+                    <h5 class="card-title">My Results</h5>
+                    <p class="card-text">
+                        Keep track of your race history and results.
+                    </p>
+                    <a href="#" class="btn btn-dark">
+                        View Results
+                    </a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+</div>
