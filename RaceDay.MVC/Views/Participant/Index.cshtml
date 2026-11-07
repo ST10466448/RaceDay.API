@@ -1,61 +1,81 @@
-﻿@{
+﻿@model List<RaceDay.MVC.ViewModels.EventViewModel>
+
+@{
     ViewData["Title"] = "Participant Dashboard";
 }
 
 <div class="container mt-4">
-
     <div class="p-5 mb-4 bg-dark text-white rounded-3">
         <h1>Welcome to RaceDay, @ViewBag.FullName!</h1>
-        <p class="lead">
-            Your next race adventure starts here.
-        </p>
+        <p class="lead">Your next race adventure starts here.</p>
     </div>
 
-    <h2 class="mb-4">Participant Dashboard</h2>
+    <h2 class="mb-4">Upcoming Events</h2>
 
-    <div class="row g-4">
-
-        <div class="col-md-4">
-            <div class="card shadow h-100">
-                <div class="card-body">
-                    <h5 class="card-title">Upcoming Events</h5>
-                    <p class="card-text">
-                        Discover upcoming running, walking and cycling events.
-                    </p>
-                    <a href="#" class="btn btn-dark">
-                        Browse Events
-                    </a>
-                </div>
-            </div>
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
         </div>
+    }
 
-        <div class="col-md-4">
-            <div class="card shadow h-100">
-                <div class="card-body">
-                    <h5 class="card-title">My Enrolments</h5>
-                    <p class="card-text">
-                        View the events and categories you have entered.
-                    </p>
-                    <a href="#" class="btn btn-dark">
-                        My Enrolments
-                    </a>
-                </div>
-            </div>
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No events are currently available.
         </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var raceEvent in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                @raceEvent.EventName
+                            </h5>
 
-        <div class="col-md-4">
-            <div class="card shadow h-100">
-                <div class="card-body">
-                    <h5 class="card-title">My Results</h5>
-                    <p class="card-text">
-                        Keep track of your race history and results.
-                    </p>
-                    <a href="#" class="btn btn-dark">
-                        View Results
-                    </a>
+                            <p class="card-text">
+                                @raceEvent.Description
+                            </p>
+
+                            <p>
+                                <strong>Type:</strong>
+                                @raceEvent.EventType
+                            </p>
+
+                            <p>
+                                <strong>Date:</strong>
+                                @raceEvent.EventDate.ToString("dd MMMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Start time:</strong>
+                                @raceEvent.StartTime
+                            </p>
+
+                            <p>
+                                <strong>Venue:</strong>
+                                @raceEvent.Venue
+                            </p>
+                            <a asp-controller="Participant"
+                            accesskey="Details"
+                            asp-route-id="@raceEvent.EventID"
+                            class="btn btn-dark">
+                            View Details
+                            </a>
+                            <a asp-controller="Participant"
+                               asp-action="Categories"
+                               asp-route-eventId="@raceEvent.EventID"
+                               class="btn btn-dark">
+                                View Categories
+                            </a>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            }
         </div>
-
-    </div>
+    }
 </div>

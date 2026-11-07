@@ -1,6 +1,7 @@
 ﻿using System.Net.Http.Json;
 using RaceDay.MVC.ViewModels;
 
+
 namespace RaceDay.MVC.Services
 {
     public class EventService
@@ -20,6 +21,13 @@ namespace RaceDay.MVC.Services
                 "api/Events");
 
             return events ?? new List<EventViewModel>();
+        }
+        public async Task<EventDetailsViewModel?> GetEventByIdAsync(int id)
+        {
+            var client = _apiService.GetAuthenticatedClient();
+
+            return await client.GetFromJsonAsync<EventDetailsViewModel>(
+                $"api/Events/{id}");
         }
     }
 }
