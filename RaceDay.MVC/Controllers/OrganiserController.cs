@@ -10,15 +10,21 @@ namespace RaceDay.MVC.Controllers
         private readonly EventService _eventService;
         private readonly RouteService _routeService;
         private readonly CategoryService _categoryService;
+        private readonly EntryService _entryService;
+        private readonly ResultService _resultService;
 
         public OrganiserController(
             EventService eventService,
             RouteService routeService,
-            CategoryService categoryService)
+            CategoryService categoryService,
+            EntryService entryService,
+            ResultService resultService)
         {
             _eventService = eventService;
             _routeService = routeService;
             _categoryService = categoryService;
+            _entryService = entryService;
+            _resultService = resultService;
         }
 
         public IActionResult Dashboard()
@@ -344,6 +350,97 @@ namespace RaceDay.MVC.Controllers
             return RedirectToAction(
                 "EventCategories",
                 new { eventId = eventId });
+        }
+        public async Task<IActionResult> ParticipantEnrolments()
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var entries = await _entryService.GetOrganiserEntriesAsync();
+
+                return View(entries);
+            }
+            catch
+            {
+                ViewBag.ErrorMessage =
+                    "Unable to load participant enrolments. Please try again later.";
+
+                return View(new List<OrganiserEntryViewModel>());
+            }
+        }
+        // Display results belonging to the organiser's events
+        public async Task<IActionResult> ManageResults()
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var model = new ManageResultsViewModel
+                {
+                    Results = await _resultService.GetMyResultsAsync(),
+                    Entries = await _entryService.GetOrganiserEntriesAsync()
+                };
+
+                return View(model);
+            }
+            catch
+            {
+                ViewBag.ErrorMessage =
+                    "Unable to load race results. Please try again later.";
+
+                return View(new ManageResultsViewModel());
+            }
+        }
+        // Display the form for recording a race result
+        public async Task<IActionResult> CreateResult()
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            var entries = await _entryService.GetOrganiserEntriesAsync();
+
+            return View(entries);
+        }
+
+        // Save a new race result through the API
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> CreateResult(ResultViewModel model)
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                var entries = await _entryService.GetOrganiserEntriesAsync();
+                ViewBag.ErrorMessage = "Please check the result details.";
+                return View(entries);
+            }
+
+            try
+            {
+                var response = await _resultService.CreateResultAsync(model);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Race result recorded successfully.";
+                    return RedirectToAction(nameof(ManageResults));
+                }
+
+                ViewBag.ErrorMessage =
+                    "Unable to record the result. Check that the participant enrolment is valid.";
+            }
+            catch
+            {
+                ViewBag.ErrorMessage =
+                    "An error occurred while recording the race result.";
+            }
+
+            var organiserEntries = await _entryService.GetOrganiserEntriesAsync();
+            return View(organiserEntries);
         }
     }
 }

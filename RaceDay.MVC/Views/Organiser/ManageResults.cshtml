@@ -1,0 +1,93 @@
+﻿@model RaceDay.MVC.ViewModels.ManageResultsViewModel
+
+@{
+    ViewData["Title"] = "Manage Results";
+}
+
+<h2>Manage Race Results</h2>
+
+<p>View and manage race results for participants enrolled in your events.</p>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+
+<div class="card mb-4">
+    <div class="card-header">
+        <h4>Record a New Result</h4>
+    </div>
+
+    <div class="card-body">
+        @if (Model.Entries == null || !Model.Entries.Any())
+        {
+            <p class="text-muted">
+                No participant enrolments are available yet.
+            </p>
+        }
+        else
+        {
+            <p>
+            <p>
+                You currently have @Model.Entries.Count participant enrolment(s).
+            </p>
+
+            <a asp-controller="Organiser"
+               asp-action="CreateResult"
+               class="btn btn-primary">
+                Record New Result
+            </a>
+            </p>
+        }
+    </div>
+</div>
+<a asp-controller="Organiser"
+   asp-action="CreateResult"
+   class="btn btn-primary mb-3">
+    Record New Result
+</a>
+<h4>Recorded Results</h4>
+
+@if (Model.Results == null || !Model.Results.Any())
+{
+    <div class="alert alert-info">
+        No race results have been recorded yet.
+    </div>
+}
+else
+{
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Result ID</th>
+                <th>Entry ID</th>
+                <th>Finish Time</th>
+                <th>Position</th>
+                <th>Average Pace</th>
+                <th>Result Date</th>
+            </tr>
+        </thead>
+
+        <tbody>
+            @foreach (var result in Model.Results)
+            {
+                <tr>
+                    <td>@result.ResultID</td>
+                    <td>@result.EntryID</td>
+                    <td>@result.FinishTime</td>
+                    <td>@result.Position</td>
+                    <td>@result.AveragePace</td>
+                    <td>@result.ResultDate.ToString("dd MMM yyyy")</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<a asp-controller="Organiser"
+   asp-action="Dashboard"
+   class="btn btn-secondary">
+    Back to Dashboard
+</a>
