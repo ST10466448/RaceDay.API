@@ -23,7 +23,49 @@ namespace RaceDay.API.Controllers
         {
             _context = context;
         }
+        // GET: api/Entries/my
+        [Authorize(Roles = "Participant")]
+        [HttpGet("my")]
+        public async Task<ActionResult<IEnumerable<object>>> GetMyEntries()
+        {
+            var userIdValue = User.FindFirst(
+                ClaimTypes.NameIdentifier)?.Value;
 
+            if (!int.TryParse(userIdValue, out int participantId))
+            {
+                return Unauthorized();
+            }
+
+            var entries = await _context.Entries
+                .AsNoTracking()
+                .Where(e => e.ParticipantID == participantId)
+                .Select(e => new
+                {
+                    e.EntryID,
+                    e.ParticipantID,
+                    e.CategoryID,
+                    e.EntryDate,
+                    e.EntryStatus,
+                    e.RaceNumber,
+
+                    Category = new
+                    {
+                        e.Category!.CategoryName,
+                        e.Category.DistanceKM,
+                        e.Category.EntryFee,
+
+                        Event = new
+                        {
+                            e.Category.Event!.EventName,
+                            e.Category.Event.EventDate,
+                            e.Category.Event.Venue
+                        }
+                    }
+                })
+                .ToListAsync();
+
+            return Ok(entries);
+        }
         /// <summary>
         /// Retrieves entries associated with events owned by the
         /// authenticated organiser.

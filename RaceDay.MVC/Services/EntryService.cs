@@ -20,5 +20,14 @@ namespace RaceDay.MVC.Services
             return await client.PostAsJsonAsync(
                 "api/Entries", model);
         }
+        public async Task<List<MyEnrolmentViewModel>> GetMyEnrolmentsAsync()
+        {
+            var client = _apiService.GetAuthenticatedClient();
+
+            var enrolments = await client.GetFromJsonAsync<List<MyEnrolmentViewModel>>(
+                "api/Entries/my");
+
+            return enrolments ?? new List<MyEnrolmentViewModel>();
+        }
     }
 }

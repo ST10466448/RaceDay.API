@@ -7,13 +7,16 @@ namespace RaceDay.MVC.Controllers
     {
         private readonly EventService _eventService;
         private readonly CategoryService _categoryService;
+        private readonly EntryService _entryService;
 
         public ParticipantController(
             EventService eventService,
-            CategoryService categoryService)
+            CategoryService categoryService,
+            EntryService entryService)
         {
             _eventService = eventService;
             _categoryService = categoryService;
+            _entryService = entryService;
         }
 
         public async Task<IActionResult> Index()
@@ -86,6 +89,69 @@ namespace RaceDay.MVC.Controllers
 
                 return View(
                     new List<RaceDay.MVC.ViewModels.CategoryViewModel>());
+            }
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> Enrol(
+            RaceDay.MVC.ViewModels.EntryViewModel model,
+            int eventId)
+        {
+            if (HttpContext.Session.GetString("Role") != "Participant")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                TempData["ErrorMessage"] = "Please select a valid category.";
+                return RedirectToAction("Categories", new { eventId });
+            }
+
+            try
+            {
+                var response = await _entryService.EnrolAsync(model);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] =
+                        "You have successfully enrolled in this category!";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] =
+                        "Enrolment failed. Please check your selection and try again.";
+                }
+            }
+            catch
+            {
+                TempData["ErrorMessage"] =
+                    "Unable to process your enrolment. Please try again.";
+            }
+
+            return RedirectToAction("Categories", new { eventId });
+        }
+
+        public async Task<IActionResult> MyEnrolments()
+        {
+            if (HttpContext.Session.GetString("Role") != "Participant")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var enrolments = await _entryService.GetMyEnrolmentsAsync();
+
+                return View(enrolments);
+            }
+            catch (Exception ex)
+            {
+                ViewBag.ErrorMessage = ex.Message;
+
+                return View(
+                    new List<RaceDay.MVC.ViewModels.MyEnrolmentViewModel>());
             }
         }
     }

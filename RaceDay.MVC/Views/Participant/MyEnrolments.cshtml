@@ -1,0 +1,88 @@
+﻿@model List<RaceDay.MVC.ViewModels.MyEnrolmentViewModel>
+
+@{
+    ViewData["Title"] = "My Enrolments";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-3">My Enrolments</h2>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            You have not enrolled in any event categories yet.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var enrolment in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                @(enrolment.Category?.Event?.EventName ?? "Event unavailable")
+                            </h5>
+
+                            <p>
+                                <strong>Category:</strong>
+                                @(enrolment.Category?.CategoryName ?? "N/A")
+                            </p>
+
+                            <p>
+                                <strong>Distance:</strong>
+                                @(enrolment.Category?.DistanceKM.ToString("N2") ?? "N/A") km
+                            </p>
+
+                            <p>
+                                <strong>Entry Fee:</strong>
+                                R @(enrolment.Category?.EntryFee.ToString("N2") ?? "N/A")
+                            </p>
+
+                            <p>
+                                <strong>Event Date:</strong>
+                                @(enrolment.Category?.Event?.EventDate.ToString("dd MMMM yyyy") ?? "N/A")
+                            </p>
+
+                            <p>
+                                <strong>Venue:</strong>
+                                @(enrolment.Category?.Event?.Venue ?? "N/A")
+                            </p>
+
+                            <p>
+                                <strong>Enrolment Date:</strong>
+                                @enrolment.EntryDate.ToString("dd MMMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Status:</strong>
+                                <span class="badge bg-success">
+                                    @enrolment.EntryStatus
+                                </span>
+                            </p>
+
+                            <p>
+                                <strong>Race Number:</strong>
+                                @(enrolment.RaceNumber?.ToString() ?? "Not assigned")
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    }
+
+    <a asp-controller="Participant"
+       asp-action="Index"
+       class="btn btn-outline-dark mt-4">
+        Back to Events
+    </a>
+</div>

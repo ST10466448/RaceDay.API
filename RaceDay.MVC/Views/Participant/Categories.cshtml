@@ -6,6 +6,19 @@
 
 <div class="container mt-4">
     <h2 class="mb-3">Available Categories</h2>
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
 
     @if (Model == null || !Model.Any())
     {
@@ -39,6 +52,28 @@
                                 <strong>Maximum Participants:</strong>
                                 @category.MaxParticipants
                             </p>
+                            <form asp-controller="Participant"
+                                  asp-action="Enrol"
+                                  method="post">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="CategoryID"
+                                       value="@category.CategoryID" />
+
+                                <input type="hidden"
+                                       name="EventID"
+                                       value="@category.EventID" />
+
+                                <input type="hidden"
+                                       name="eventId"
+                                       value="@category.EventID" />
+
+                                <button type="submit" class="btn btn-success w-100">
+                                    Enrol Now
+                                </button>
+                            </form>
                         </div>
                     </div>
                 </div>

@@ -22,6 +22,7 @@ builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ApiService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<CategoryService>();
+builder.Services.AddScoped<EntryService>();
 
 var app = builder.Build();
 
