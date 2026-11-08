@@ -12,6 +12,7 @@ namespace RaceDay.MVC.Services
             _apiService = apiService;
         }
 
+        // Participant enrols in an event category
         public async Task<HttpResponseMessage> EnrolAsync(
             EntryViewModel model)
         {
@@ -20,14 +21,29 @@ namespace RaceDay.MVC.Services
             return await client.PostAsJsonAsync(
                 "api/Entries", model);
         }
+
+        // Get enrolments for the logged-in participant
         public async Task<List<MyEnrolmentViewModel>> GetMyEnrolmentsAsync()
         {
             var client = _apiService.GetAuthenticatedClient();
 
-            var enrolments = await client.GetFromJsonAsync<List<MyEnrolmentViewModel>>(
-                "api/Entries/my");
+            var enrolments =
+                await client.GetFromJsonAsync<List<MyEnrolmentViewModel>>(
+                    "api/Entries/my");
 
             return enrolments ?? new List<MyEnrolmentViewModel>();
+        }
+
+        // Get enrolments for the logged-in organiser
+        public async Task<List<OrganiserEntryViewModel>> GetOrganiserEntriesAsync()
+        {
+            var client = _apiService.GetAuthenticatedClient();
+
+            var entries =
+                await client.GetFromJsonAsync<List<OrganiserEntryViewModel>>(
+                    "api/Entries");
+
+            return entries ?? new List<OrganiserEntryViewModel>();
         }
     }
 }

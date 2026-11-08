@@ -1,0 +1,119 @@
+﻿@model RaceDay.MVC.ViewModels.CategoryViewModel
+
+@{
+    ViewData["Title"] = "Create Category";
+}
+
+<div class="container mt-4">
+
+    <h1>Create Event Category</h1>
+
+    <p class="text-muted">
+        Add a new participant category to this event.
+    </p>
+
+    <div class="card shadow mt-4">
+        <div class="card-body">
+
+            <form asp-controller="Organiser"
+                  asp-action="CreateCategory"
+                  method="post">
+
+                <input type="hidden" asp-for="EventID" />
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="CategoryName"
+                           class="form-label">
+                        Category Name
+                    </label>
+
+                    <input asp-for="CategoryName"
+                           class="form-control"
+                           placeholder="e.g. 5 KM Fun Run" />
+
+                    <span asp-validation-for="CategoryName"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="DistanceKM"
+                           class="form-label">
+                        Distance (KM)
+                    </label>
+
+                    <input asp-for="DistanceKM"
+                           type="number"
+                           step="0.01"
+                           min="0.01"
+                           class="form-control"
+                           placeholder="e.g. 5" />
+
+                    <span asp-validation-for="DistanceKM"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EntryFee"
+                           class="form-label">
+                        Entry Fee (R)
+                    </label>
+
+                    <input asp-for="EntryFee"
+                           type="number"
+                           step="0.01"
+                           min="0"
+                           class="form-control"
+                           placeholder="e.g. 100" />
+
+                    <span asp-validation-for="EntryFee"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="MaxParticipants"
+                           class="form-label">
+                        Maximum Participants
+                    </label>
+
+                    <input asp-for="MaxParticipants"
+                           type="number"
+                           min="1"
+                           class="form-control"
+                           placeholder="e.g. 100" />
+
+                    <span asp-validation-for="MaxParticipants"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+
+                    <button type="submit"
+                            class="btn btn-dark">
+                        Create Category
+                    </button>
+
+                    <a asp-controller="Organiser"
+                       asp-action="EventCategories"
+                       asp-route-eventId="@Model.EventID"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}

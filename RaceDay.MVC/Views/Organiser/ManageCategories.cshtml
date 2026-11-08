@@ -1,0 +1,83 @@
+﻿@model List<RaceDay.MVC.ViewModels.EventViewModel>
+
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="container mt-4">
+
+    <h1>Manage Event Categories</h1>
+
+    <p class="text-muted">
+        Select an event to view and manage its categories.
+    </p>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No events are currently available.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4 mt-2">
+
+            @foreach (var raceEvent in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+
+                    <div class="card shadow h-100">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                @raceEvent.EventName
+                            </h5>
+
+                            <p>
+                                <strong>Event Type:</strong>
+                                @raceEvent.EventType
+                            </p>
+
+                            <p>
+                                <strong>Date:</strong>
+                                @raceEvent.EventDate.ToString("dd MMMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Venue:</strong>
+                                @raceEvent.Venue
+                            </p>
+
+                            <a asp-controller="Organiser"
+                               asp-action="EventCategories"
+                               asp-route-eventId="@raceEvent.EventID"
+                               class="btn btn-dark">
+                                Manage Categories
+                            </a>
+
+                        </div>
+
+                    </div>
+
+                </div>
+            }
+
+        </div>
+    }
+
+    <div class="mt-4">
+        <a asp-action="Dashboard"
+           class="btn btn-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+</div>
