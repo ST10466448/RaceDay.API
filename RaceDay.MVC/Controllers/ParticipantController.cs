@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using RaceDay.MVC.Services;
+using RaceDay.MVC.ViewModels;
 
 namespace RaceDay.MVC.Controllers
 {
@@ -8,15 +9,18 @@ namespace RaceDay.MVC.Controllers
         private readonly EventService _eventService;
         private readonly CategoryService _categoryService;
         private readonly EntryService _entryService;
+        private readonly ResultService _resultService;
 
         public ParticipantController(
             EventService eventService,
             CategoryService categoryService,
-            EntryService entryService)
+            EntryService entryService,
+            ResultService resultService             )
         {
             _eventService = eventService;
             _categoryService = categoryService;
             _entryService = entryService;
+            _resultService = resultService;
         }
 
         public async Task<IActionResult> Index()
@@ -152,6 +156,27 @@ namespace RaceDay.MVC.Controllers
 
                 return View(
                     new List<RaceDay.MVC.ViewModels.MyEnrolmentViewModel>());
+            }
+        }
+        public async Task<IActionResult> MyResults()
+        {
+            if (HttpContext.Session.GetString("Role") != "Participant")
+            {
+                return RedirectToAction("Login", "Account");
+            }
+
+            try
+            {
+                var results = await _resultService.GetMyResultsAsync();
+
+                return View(results);
+            }
+            catch
+            {
+                ViewBag.ErrorMessage =
+                    "Unable to load your results. Please try again later.";
+
+                return View(new List<ResultViewModel>());
             }
         }
     }

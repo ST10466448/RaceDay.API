@@ -1,0 +1,131 @@
+﻿@model List<RaceDay.MVC.ViewModels.EventViewModel>
+
+@{
+    ViewData["Title"] = "Manage Events";
+}
+
+<div class="container mt-4">
+
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1>Manage Events</h1>
+            <p class="text-muted">
+                View and manage your RaceDay events.
+            </p>
+        </div>
+
+        <a asp-controller="Organiser"
+           asp-action="CreateEvent"
+           class="btn btn-dark">
+            + Create New Event
+        </a>
+    </div>
+
+    @if (ViewBag.ErrorMessage != null)
+    {
+        <div class="alert alert-danger">
+            @ViewBag.ErrorMessage
+        </div>
+    }
+
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    @if (Model == null || !Model.Any())
+    {
+        <div class="alert alert-info">
+            No events are currently available.
+            Select Create New Event to add your first event.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+
+            @foreach (var raceEvent in Model)
+            {
+                <div class="col-md-6 col-lg-4">
+                    <div class="card shadow h-100">
+
+                        <div class="card-body">
+
+                            <h5 class="card-title">
+                                @raceEvent.EventName
+                            </h5>
+
+                            <p class="card-text">
+                                @raceEvent.Description
+                            </p>
+
+                            <hr />
+
+                            <p>
+                                <strong>Event Type:</strong>
+                                @raceEvent.EventType
+                            </p>
+
+                            <p>
+                                <strong>Date:</strong>
+                                @raceEvent.EventDate.ToString("dd MMMM yyyy")
+                            </p>
+
+                            <p>
+                                <strong>Start Time:</strong>
+                                @raceEvent.StartTime
+                            </p>
+
+                            <p>
+                                <strong>Venue:</strong>
+                                @raceEvent.Venue
+                            </p>
+
+                            <p>
+                                <strong>Route ID:</strong>
+                                @raceEvent.RouteID
+                            </p>
+
+                            <div class="d-flex gap-2 mt-3">
+
+                                <a asp-controller="Organiser"
+                                   asp-action="EditEvent"
+                                   asp-route-id="@raceEvent.EventID"
+                                   class="btn btn-outline-primary">
+                                    Edit
+                                </a>
+
+                                <form asp-controller="Organiser"
+                                      asp-action="DeleteEvent"
+                                      asp-route-id="@raceEvent.EventID"
+                                      method="post"
+                                      onsubmit="return confirm('Are you sure you want to delete this event?');">
+
+                                    <button type="submit"
+                                            class="btn btn-outline-danger">
+                                        Delete
+                                    </button>
+
+                                </form>
+
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            }
+
+        </div>
+    }
+
+    <div class="mt-4">
+        <a asp-controller="Organiser"
+           asp-action="Dashboard"
+           class="btn btn-secondary">
+            Back to Dashboard
+        </a>
+    </div>
+
+</div>

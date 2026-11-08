@@ -1,0 +1,153 @@
+﻿@model RaceDay.MVC.ViewModels.EventViewModel
+
+@{
+    ViewData["Title"] = "Create Event";
+    var routes = ViewBag.Routes as List<RaceDay.MVC.ViewModels.RouteViewModel>;
+}
+
+<div class="container mt-4">
+
+    <h1>Create New Event</h1>
+
+    <p class="text-muted">
+        Enter the details below to create a new RaceDay event.
+    </p>
+
+    <div class="card shadow mt-4">
+        <div class="card-body">
+
+            <form asp-controller="Organiser"
+                  asp-action="CreateEvent"
+                  method="post">
+
+                <div asp-validation-summary="ModelOnly"
+                     class="text-danger mb-3">
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EventName" class="form-label">
+                        Event Name
+                    </label>
+                    <input asp-for="EventName" class="form-control" />
+                    <span asp-validation-for="EventName"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Description" class="form-label">
+                        Description
+                    </label>
+                    <textarea asp-for="Description"
+                              class="form-control"
+                              rows="3"></textarea>
+                    <span asp-validation-for="Description"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EventType" class="form-label">
+                        Event Type
+                    </label>
+                    <select asp-for="EventType" class="form-select">
+                        <option value="">Select event type</option>
+                        <option value="Run">Run</option>
+                        <option value="Walk">Walk</option>
+                        <option value="Cycle">Cycle</option>
+                    </select>
+                    <span asp-validation-for="EventType"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="EventDate" class="form-label">
+                        Event Date
+                    </label>
+                    <input asp-for="EventDate"
+                           type="date"
+                           class="form-control" />
+                    <span asp-validation-for="EventDate"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="StartTime" class="form-label">
+                        Start Time
+                    </label>
+
+                    <input type="time"
+                           name="StartTime"
+                           id="StartTime"
+                           value="@Model.StartTime.ToString(@"hh\:mm")"
+                           class="form-control"
+                           required />
+
+                    <span asp-validation-for="StartTime"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Venue" class="form-label">
+                        Venue
+                    </label>
+                    <input asp-for="Venue" class="form-control" />
+                    <span asp-validation-for="Venue"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="WeatherLocation" class="form-label">
+                        Weather Location
+                    </label>
+                    <input asp-for="WeatherLocation"
+                           class="form-control" />
+                    <span asp-validation-for="WeatherLocation"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="RouteID" class="form-label">
+                        Select Route
+                    </label>
+
+                    <select asp-for="RouteID" class="form-select">
+                        <option value="">Select a route</option>
+
+                        @if (routes != null)
+                        {
+                            @foreach (var route in routes)
+                            {
+                                <option value="@route.RouteID">
+                                    @route.RouteName
+                                    (@route.DistanceKM km)
+                                </option>
+                            }
+                        }
+                    </select>
+
+                    <span asp-validation-for="RouteID"
+                          class="text-danger"></span>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-dark">
+                        Create Event
+                    </button>
+
+                    <a asp-action="ManageEvents"
+                       class="btn btn-secondary">
+                        Cancel
+                    </a>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+
+</div>
+
+@section Scripts {
+    @{
+        await Html.RenderPartialAsync("_ValidationScriptsPartial");
+    }
+}
