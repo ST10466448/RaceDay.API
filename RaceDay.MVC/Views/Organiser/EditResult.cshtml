@@ -1,0 +1,102 @@
+﻿@model RaceDay.MVC.ViewModels.EditResultViewModel
+
+@{
+    ViewData["Title"] = "Edit Race Result";
+}
+
+<h2>Edit Race Result</h2>
+
+<p>Update the participant's race finishing details.</p>
+
+@if (ViewBag.ErrorMessage != null)
+{
+    <div class="alert alert-danger">
+        @ViewBag.ErrorMessage
+    </div>
+}
+
+<form asp-action="EditResult"
+      asp-route-id="@Model.Result.ResultID"
+      method="post">
+
+    @Html.AntiForgeryToken()
+
+    <input type="hidden"
+           asp-for="Result.ResultID" />
+
+    <div class="mb-3">
+        <label asp-for="Result.EntryID" class="form-label">
+            Participant Enrolment
+        </label>
+
+        <select asp-for="Result.EntryID"
+                class="form-select"
+                required>
+
+            @foreach (var entry in Model.Entries)
+            {
+                <option value="@entry.EntryID">
+                    Entry #@entry.EntryID -
+                    @entry.ParticipantName -
+                    @entry.EventName -
+                    @entry.CategoryName
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Result.FinishTime" class="form-label">
+            Finish Time (HH:MM:SS)
+        </label>
+
+        <input asp-for="Result.FinishTime"
+               class="form-control"
+               type="text"
+               placeholder="00:45:30" />
+
+        <span asp-validation-for="Result.FinishTime"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Result.Position" class="form-label">
+            Finishing Position
+        </label>
+
+        <input asp-for="Result.Position"
+               class="form-control"
+               type="number"
+               min="1"
+               max="100000" />
+
+        <span asp-validation-for="Result.Position"
+              class="text-danger"></span>
+    </div>
+
+    <div class="mb-3">
+        <label asp-for="Result.AveragePace" class="form-label">
+            Average Pace
+        </label>
+
+        <input asp-for="Result.AveragePace"
+               class="form-control"
+               type="number"
+               min="0.01"
+               max="1000"
+               step="0.01" />
+
+        <span asp-validation-for="Result.AveragePace"
+              class="text-danger"></span>
+    </div>
+
+    <button type="submit" class="btn btn-primary">
+        Update Result
+    </button>
+
+    <a asp-action="ManageResults"
+       class="btn btn-secondary">
+        Cancel
+    </a>
+
+</form>

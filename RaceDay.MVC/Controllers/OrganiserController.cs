@@ -442,5 +442,102 @@ namespace RaceDay.MVC.Controllers
             var organiserEntries = await _entryService.GetOrganiserEntriesAsync();
             return View(organiserEntries);
         }
+        // Display the form for editing an existing race result
+        public async Task<IActionResult> EditResult(int id)
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var result = await _resultService.GetResultByIdAsync(id);
+
+                if (result == null)
+                    return NotFound();
+
+                var model = new EditResultViewModel
+                {
+                    Result = result,
+                    Entries = await _entryService.GetOrganiserEntriesAsync()
+                };
+
+                return View(model);
+            }
+            catch
+            {
+                TempData["ErrorMessage"] = "Unable to load the race result.";
+                return RedirectToAction(nameof(ManageResults));
+            }
+        }
+
+        // Save changes to an existing race result
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> EditResult(
+            int id, EditResultViewModel model)
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            if (!ModelState.IsValid)
+            {
+                model.Entries = await _entryService.GetOrganiserEntriesAsync();
+                return View(model);
+            }
+
+            try
+            {
+                var response = await _resultService.UpdateResultAsync(
+                    id, model.Result);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] = "Race result updated successfully.";
+                    return RedirectToAction(nameof(ManageResults));
+                }
+
+                ViewBag.ErrorMessage =
+                    "Unable to update the result. Please check the details.";
+            }
+            catch
+            {
+                ViewBag.ErrorMessage =
+                    "An error occurred while updating the race result.";
+            }
+
+            model.Entries = await _entryService.GetOrganiserEntriesAsync();
+            return View(model);
+        }
+        // Delete an existing race result
+        [HttpPost]
+        [ValidateAntiForgeryToken]
+        public async Task<IActionResult> DeleteResult(int id)
+        {
+            if (HttpContext.Session.GetString("Role") != "Organiser")
+                return RedirectToAction("Login", "Account");
+
+            try
+            {
+                var response = await _resultService.DeleteResultAsync(id);
+
+                if (response.IsSuccessStatusCode)
+                {
+                    TempData["SuccessMessage"] =
+                        "Race result deleted successfully.";
+                }
+                else
+                {
+                    TempData["ErrorMessage"] =
+                        "Unable to delete the race result.";
+                }
+            }
+            catch
+            {
+                TempData["ErrorMessage"] =
+                    "An error occurred while deleting the race result.";
+            }
+
+            return RedirectToAction(nameof(ManageResults));
+        }
     }
 }
