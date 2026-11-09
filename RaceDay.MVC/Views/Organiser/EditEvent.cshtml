@@ -19,7 +19,8 @@
             <form asp-controller="Organiser"
                   asp-action="EditEvent"
                   asp-route-id="@Model.EventID"
-                  method="post">
+                  method="post"
+                  enctype="multipart/form-data">
 
                 <input type="hidden" asp-for="EventID" />
 
@@ -104,6 +105,31 @@
                            class="form-control" />
                     <span asp-validation-for="WeatherLocation"
                           class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Event Image</label>
+
+                    @if (!string.IsNullOrEmpty(Model.ImageUrl))
+                    {
+                        <div class="mb-2">
+                            <p>Current Event Image:</p>
+                            <img src="@Model.ImageUrl"
+                                 alt="Current event image"
+                                 style="max-width: 250px; max-height: 180px;"
+                                 class="img-thumbnail" />
+                        </div>
+                    }
+
+                    <input type="file"
+                           name="imageFile"
+                           class="form-control"
+                           accept=".jpg,.jpeg,.png" />
+
+                    <small class="text-muted">
+                        Select a new JPG or PNG image to replace the current image.
+                        Leave empty to keep the existing image.
+                        Maximum size: 5 MB.
+                    </small>
                 </div>
 
                 <div class="mb-3">

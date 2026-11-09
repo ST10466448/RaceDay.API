@@ -18,7 +18,8 @@
 
             <form asp-controller="Organiser"
                   asp-action="CreateEvent"
-                  method="post">
+                  method="post"
+                  enctype="multipart/form-data">
 
                 <div asp-validation-summary="ModelOnly"
                      class="text-danger mb-3">
@@ -102,6 +103,18 @@
                            class="form-control" />
                     <span asp-validation-for="WeatherLocation"
                           class="text-danger"></span>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Event Image</label>
+
+                    <input type="file"
+                           name="imageFile"
+                           class="form-control"
+                           accept=".jpg,.jpeg,.png" />
+
+                    <small class="text-muted">
+                        Upload a JPG or PNG image. Maximum size: 5 MB.
+                    </small>
                 </div>
 
                 <div class="mb-3">

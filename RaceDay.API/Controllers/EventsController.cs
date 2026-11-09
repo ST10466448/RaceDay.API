@@ -157,6 +157,7 @@ namespace RaceDay.API.Controllers
             existingEvent.Venue = updatedEvent.Venue;
             existingEvent.WeatherLocation =
                 updatedEvent.WeatherLocation;
+            existingEvent.ImageUrl = updatedEvent.ImageUrl;
 
             // Do not change OrganizerID from the request body.
             await _context.SaveChangesAsync();

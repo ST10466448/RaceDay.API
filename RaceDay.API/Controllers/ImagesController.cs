@@ -6,7 +6,7 @@ namespace RaceDay.API.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize(Roles = "Organiser")]
+    [Authorize]
     public class ImagesController : ControllerBase
     {
         private readonly AzureBlobStorageService _blobStorageService;
@@ -19,6 +19,7 @@ namespace RaceDay.API.Controllers
 
         [HttpPost("upload")]
         [Consumes("multipart/form-data")]
+        [Authorize(Roles = "Organiser")]
         public async Task<IActionResult> UploadImage(
     IFormFile image)
         {
@@ -48,6 +49,29 @@ namespace RaceDay.API.Controllers
                 {
                     message = ex.Message
                 });
+            }
+        }
+        [HttpGet("download/{fileName}")]
+        [Authorize]
+        public async Task<IActionResult> DownloadImage(string fileName)
+        {
+            try
+            {
+                if (string.IsNullOrWhiteSpace(fileName) ||
+                    fileName != Path.GetFileName(fileName))
+                {
+                    return BadRequest("Invalid image filename.");
+                }
+
+                var image = await _blobStorageService.DownloadImageAsync(
+                    fileName,
+                    "event-images");
+
+                return File(image.Content, image.ContentType);
+            }
+            catch (Azure.RequestFailedException ex) when (ex.Status == 404)
+            {
+                return NotFound("Image not found.");
             }
         }
     }

@@ -85,5 +85,34 @@ namespace RaceDay.API.Services
 
             return blobClient.Uri.ToString();
         }
+        public async Task<(Stream Content, string ContentType)> DownloadImageAsync(
+    string fileName,
+    string containerName)
+        {
+            var connectionString =
+                _configuration.GetConnectionString("AzureBlobStorage");
+
+            if (string.IsNullOrWhiteSpace(connectionString))
+            {
+                throw new InvalidOperationException(
+                    "Azure Blob Storage connection string is missing.");
+            }
+
+            var blobServiceClient =
+                new BlobServiceClient(connectionString);
+
+            var containerClient =
+                blobServiceClient.GetBlobContainerClient(containerName);
+
+            var blobClient =
+                containerClient.GetBlobClient(fileName);
+
+            var response = await blobClient.DownloadStreamingAsync();
+
+            return (
+                response.Value.Content,
+                response.Value.Details.ContentType ?? "application/octet-stream"
+            );
+        }
     }
 }

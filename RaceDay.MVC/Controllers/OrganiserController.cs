@@ -12,19 +12,21 @@ namespace RaceDay.MVC.Controllers
         private readonly CategoryService _categoryService;
         private readonly EntryService _entryService;
         private readonly ResultService _resultService;
-
+        private readonly ImageService _imageService;
         public OrganiserController(
             EventService eventService,
             RouteService routeService,
             CategoryService categoryService,
             EntryService entryService,
-            ResultService resultService)
+            ResultService resultService,
+            ImageService imageService)
         {
             _eventService = eventService;
             _routeService = routeService;
             _categoryService = categoryService;
             _entryService = entryService;
             _resultService = resultService;
+            _imageService = imageService;
         }
 
         public IActionResult Dashboard()
@@ -76,7 +78,9 @@ namespace RaceDay.MVC.Controllers
         // Submit the Create Event form
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> CreateEvent(EventViewModel model)
+        public async Task<IActionResult> CreateEvent(
+         EventViewModel model,
+         IFormFile? imageFile)
         {
             if (HttpContext.Session.GetString("Role") != "Organiser")
             {
@@ -89,6 +93,22 @@ namespace RaceDay.MVC.Controllers
                 return View(model);
             }
 
+            // Upload the event image to Azure Blob Storage if one was selected.
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                try
+                {
+                    model.ImageUrl = await _imageService.UploadImageAsync(imageFile);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+                    ViewBag.Routes = await _routeService.GetRoutesAsync();
+                    return View(model);
+                }
+            }
+
+            // Send the event details, including ImageUrl, to the API.
             var response = await _eventService.CreateEventAsync(model);
 
             if (response.IsSuccessStatusCode)
@@ -128,7 +148,7 @@ namespace RaceDay.MVC.Controllers
         // Submit the updated Event
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> EditEvent(int id, EventViewModel model)
+        public async Task<IActionResult> EditEvent(int id, EventViewModel model,IFormFile? imageFile)
         {
             if (HttpContext.Session.GetString("Role") != "Organiser")
             {
@@ -139,6 +159,32 @@ namespace RaceDay.MVC.Controllers
             {
                 ViewBag.Routes = await _routeService.GetRoutesAsync();
                 return View(model);
+            }
+            // Preserve the existing image unless a replacement is uploaded.
+            var existingEvent = await _eventService.GetEventForEditAsync(id);
+
+            if (existingEvent == null)
+            {
+                return NotFound();
+            }
+
+            model.ImageUrl = existingEvent.ImageUrl;
+
+            // Upload a replacement image if the organiser selected one.
+            if (imageFile != null && imageFile.Length > 0)
+            {
+                try
+                {
+                    model.ImageUrl = await _imageService.UploadImageAsync(imageFile);
+                }
+                catch (Exception ex)
+                {
+                    ModelState.AddModelError("", ex.Message);
+
+                    ViewBag.Routes = await _routeService.GetRoutesAsync();
+
+                    return View(model);
+                }
             }
 
             var response = await _eventService.UpdateEventAsync(id, model);

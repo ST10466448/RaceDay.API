@@ -20,11 +20,13 @@ builder.Services.AddHttpClient("RaceDayApi", client =>
 });
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<ApiService>();
+builder.Services.AddScoped<ImageService>();
 builder.Services.AddScoped<EventService>();
 builder.Services.AddScoped<CategoryService>();
 builder.Services.AddScoped<EntryService>();
 builder.Services.AddScoped<ResultService>();
 builder.Services.AddScoped<RouteService>();
+
 
 var app = builder.Build();
 

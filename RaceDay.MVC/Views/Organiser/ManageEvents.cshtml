@@ -51,6 +51,24 @@
                 <div class="col-md-6 col-lg-4">
                     <div class="card shadow h-100">
 
+                        @if (!string.IsNullOrEmpty(raceEvent.ImageUrl))
+                        {
+                            var imageFileName = System.IO.Path.GetFileName(
+                            new Uri(raceEvent.ImageUrl).AbsolutePath);
+
+                            <img src="@Url.Action("Display", "Images",
+                                                                       new { fileName = imageFileName })"
+                     class="card-img-top"
+                     alt="@raceEvent.EventName"
+                     style="height: 220px; width: 100%; object-fit: cover;" />
+                                }
+                        else
+                        {
+                            <div class="bg-light text-muted text-center py-5">
+                                No event image available
+                            </div>
+                        }
+
                         <div class="card-body">
 
                             <h5 class="card-title">
