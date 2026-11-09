@@ -1,4 +1,4 @@
-Youtube Link: https://www.youtube.com/watch?v=MXQM6khNZK4
+Youtube Link: 
 
 1. Project Overview
 
@@ -244,6 +244,9 @@ GitHub Actions is used for continuous integration.
 The workflow automatically builds the RaceDay API and executes the automated unit tests when changes are pushed to the GitHub repository.
 
 The workflow results can be viewed under the Actions tab in GitHub.
+
+<img width="1072" height="847" alt="image" src="https://github.com/user-attachments/assets/8153b642-32ba-4a0b-8721-e2a4e5f106ee" />
+
 
 
 [Insert YouTube demonstration link]
