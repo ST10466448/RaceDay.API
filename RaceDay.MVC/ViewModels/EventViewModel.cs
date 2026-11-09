@@ -30,6 +30,8 @@ namespace RaceDay.MVC.ViewModels
 
         [StringLength(150)]
         public string WeatherLocation { get; set; } = string.Empty;
+        [StringLength(500)]
+        public string? ImageUrl { get; set; }
 
         [Required]
         [Range(1, int.MaxValue)]

@@ -37,6 +37,9 @@ namespace RaceDay.API.Models
         [MaxLength(150)]
         public string WeatherLocation { get; set; } = string.Empty;
 
+        [MaxLength(500)]
+        public string? ImageUrl { get; set; }
+
         public User? Organizer { get; set; }
 
         public Route? Route { get; set; }

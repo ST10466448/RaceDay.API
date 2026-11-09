@@ -16,6 +16,42 @@ namespace RaceDay.API.Services
             IFormFile image,
             string containerName)
         {
+            // Check that an image was provided.
+            if (image == null || image.Length == 0)
+            {
+                throw new ArgumentException("Please select an image.");
+            }
+
+            // Limit image size to 5 MB.
+            if (image.Length > 5 * 1024 * 1024)
+            {
+                throw new ArgumentException(
+                    "Image size cannot exceed 5 MB.");
+            }
+
+            // Only allow JPEG and PNG images.
+            var allowedTypes = new[]
+            {
+                "image/jpeg",
+                "image/png"
+            };
+
+            if (!allowedTypes.Contains(image.ContentType.ToLowerInvariant()))
+            {
+                throw new ArgumentException(
+                    "Only JPG, JPEG and PNG images are allowed.");
+            }
+
+            var extension = Path.GetExtension(image.FileName).ToLowerInvariant();
+
+            if (extension != ".jpg" &&
+                extension != ".jpeg" &&
+                extension != ".png")
+            {
+                throw new ArgumentException(
+                    "Invalid image file extension.");
+            }
+
             var connectionString =
                 _configuration.GetConnectionString("AzureBlobStorage");
 
@@ -33,7 +69,6 @@ namespace RaceDay.API.Services
 
             await containerClient.CreateIfNotExistsAsync();
 
-            var extension = Path.GetExtension(image.FileName);
             var fileName = $"{Guid.NewGuid()}{extension}";
 
             var blobClient =
