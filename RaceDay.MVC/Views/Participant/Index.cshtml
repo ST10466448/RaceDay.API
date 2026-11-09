@@ -5,6 +5,7 @@
 }
 
 <div class="container mt-4">
+
     <div class="p-5 mb-4 bg-dark text-white rounded-3">
         <h1>Welcome to RaceDay, @ViewBag.FullName!</h1>
         <p class="lead">Your next race adventure starts here.</p>
@@ -28,11 +29,33 @@
     else
     {
         <div class="row g-4">
+
             @foreach (var raceEvent in Model)
             {
                 <div class="col-md-6 col-lg-4">
+
                     <div class="card shadow h-100">
+
+                        @if (!string.IsNullOrEmpty(raceEvent.ImageUrl))
+                        {
+                            var imageFileName = System.IO.Path.GetFileName(
+                            new Uri(raceEvent.ImageUrl).AbsolutePath);
+
+                            <img src="@Url.Action("Display", "Images",
+                                                                       new { fileName = imageFileName })"
+                     class="card-img-top"
+                     alt="@raceEvent.EventName"
+                     style="height: 220px; width: 100%; object-fit: cover;" />
+                                }
+                        else
+                        {
+                            <div class="bg-light text-muted text-center py-5">
+                                No event image available
+                            </div>
+                        }
+
                         <div class="card-body">
+
                             <h5 class="card-title">
                                 @raceEvent.EventName
                             </h5>
@@ -60,18 +83,25 @@
                                 <strong>Venue:</strong>
                                 @raceEvent.Venue
                             </p>
-                            <a asp-controller="Participant"
-                            accesskey="Details"
-                            asp-route-id="@raceEvent.EventID"
-                            class="btn btn-dark">
-                            View Details
-                            </a>
-                            <a asp-controller="Participant"
-                               asp-action="Categories"
-                               asp-route-eventId="@raceEvent.EventID"
-                               class="btn btn-dark">
-                                View Categories
-                            </a>
+
+                            <div class="d-flex flex-wrap gap-2">
+
+                                <a asp-controller="Participant"
+                                   asp-action="Details"
+                                   asp-route-id="@raceEvent.EventID"
+                                   class="btn btn-dark">
+                                    View Details
+                                </a>
+
+                                <a asp-controller="Participant"
+                                   asp-action="Categories"
+                                   asp-route-eventId="@raceEvent.EventID"
+                                   class="btn btn-dark">
+                                    View Categories
+                                </a>
+
+                            </div>
+
                         </div>
                     </div>
                 </div>
